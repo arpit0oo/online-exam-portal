@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <h2>👨‍🏫 Teacher Dashboard</h2>
+    <a href="{{ url_for('create_exam') }}" class="btn btn-success">+ Create New Exam</a>
+</div>
+
+<div class="exam-grid">
+    {% for exam in exams %}
+    <div class="exam-card">
+        <div class="exam-header">
+            <h3>{{ exam.title }}</h3>
+            <span class="badge badge-{{ exam.status }}">{{ exam.status|upper }}</span>
+        </div>
+        <p class="exam-subject">📚 {{ exam.subject }}</p>
+        <div class="exam-meta">
+            <span>⏱️ {{ exam.duration_minutes }} min</span>
+            <span>📝 {{ exam.total_marks }} marks</span>
+        </div>
+        <div class="exam-actions">
+            {% if exam.status == 'draft' %}
+                <a href="{{ url_for('add_questions', exam_id=exam.id) }}" class="btn btn-small">Add Questions</a>
+                <a href="{{ url_for('publish_exam', exam_id=exam.id) }}" class="btn btn-small btn-success">Publish</a>
+                <a href="{{ url_for('delete_exam', exam_id=exam.id) }}" class="btn btn-small btn-danger" onclick="return confirm('Delete this exam?')">Delete</a>
+            {% else %}
+                <a href="{{ url_for('view_results', exam_id=exam.id) }}" class="btn btn-small btn-info">View Results</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No exams created yet. Click "Create New Exam" to get started!</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

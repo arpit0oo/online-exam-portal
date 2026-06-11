@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <h2>👨‍🎓 Student Dashboard</h2>
+</div>
+
+<h3 class="section-title">📋 Available Exams</h3>
+<div class="exam-grid">
+    {% for exam in available_exams %}
+    <div class="exam-card">
+        <div class="exam-header">
+            <h3>{{ exam.title }}</h3>
+            <span class="badge badge-published">AVAILABLE</span>
+        </div>
+        <p class="exam-subject">📚 {{ exam.subject }}</p>
+        <p class="exam-teacher">By: {{ exam.teacher_name }}</p>
+        <div class="exam-meta">
+            <span>⏱️ {{ exam.duration_minutes }} min</span>
+            <span>📝 {{ exam.total_marks }} marks</span>
+        </div>
+        <a href="{{ url_for('take_exam', exam_id=exam.id) }}" class="btn btn-primary btn-block">Start Exam</a>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No available exams right now. Check back later!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<h3 class="section-title">📜 Past Results</h3>
+<div class="results-list">
+    {% for result in past_results %}
+    <div class="result-card">
+        <div class="result-info">
+            <h4>{{ result.exam_title or 'Exam' }}</h4>
+            <span class="score-badge">{{ result.score }}/{{ result.total_marks }}</span>
+        </div>
+        <a href="{{ url_for('view_result', result_id=result.id) }}" class="btn btn-small">View Details</a>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>You haven't attempted any exams yet.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Exam Result{% endblock %}
+{% block content %}
+<div class="result-container">
+    <div class="result-header">
+        <h2>🎯 Exam Result</h2>
+        <h3>{{ exam.title }}</h3>
+    </div>
+    
+    <div class="score-circle">
+        <div class="score-main">{{ result.score }} <span>/ {{ result.total_marks }}</span></div>
+        <div class="score-percentage">{{ "%.1f"|format(percentage) }}%</div>
+        <div class="score-status {% if percentage >= 40 %}pass{% else %}fail{% endif %}">
+            {{ 'PASS ✅' if percentage >= 40 else 'FAIL ❌' }}
+        </div>
+    </div>
+    
+    <div class="result-meta">
+        <p>⏱️ Time Taken: {{ result.time_taken_seconds // 60 }}m {{ result.time_taken_seconds % 60 }}s</p>
+        <p>🕐 Submitted: {{ result.submitted_at[:16] }}</p>
+    </div>
+    
+    <h3 class="section-title">Answer Review</h3>
+    <div class="review-list">
+        {% for question in questions %}
+        <div class="review-item {% if question.student_answer == question.correct_option %}correct{% else %}incorrect{% endif %}">
+            <p><strong>Q.</strong> {{ question.question_text }}</p>
+            <p>Your Answer: <span class="answer-badge">{{ question.student_answer }}</span></p>
+            <p>Correct Answer: <span class="answer-badge correct-badge">{{ question.correct_option }}</span></p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary btn-block">Back to Dashboard</a>
+</div>
+{% endblock %}

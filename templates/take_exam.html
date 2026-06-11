@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Take Exam - {{ exam.title }}{% endblock %}
+{% block content %}
+<div class="exam-header-bar">
+    <h2>{{ exam.title }}</h2>
+    <div class="timer-box" id="timer">⏱️ {{ remaining_seconds // 60 }}:{{ "%02d"|format(remaining_seconds % 60) }}</div>
+</div>
+
+<form method="POST" action="{{ url_for('submit_exam', exam_id=exam_id) }}" id="exam-form">
+    <input type="hidden" name="start_time" value="{{ now }}">
+    
+    <div class="questions-list">
+        {% for question in questions %}
+        <div class="question-item">
+            <p class="question-text"><strong>Q{{ loop.index }}.</strong> {{ question.question_text }} <span class="marks">({{ question.marks }} marks)</span></p>
+            <div class="options-list">
+                {% for key, value in question.options.items() %}
+                <label class="option-label">
+                    <input type="radio" name="question_{{ question.id }}" value="{{ key }}">
+                    <span>{{ key }}) {{ value }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="exam-actions-bar">
+        <button type="submit" class="btn btn-success btn-lg">Submit Exam</button>
+    </div>
+</form>
+
+<script src="{{ url_for('static', filename='js/timer.js') }}"></script>
+<script>
+    startTimer({{ remaining_seconds }}, 'exam-form');
+</script>
+{% endblock %}

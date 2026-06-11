@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Add Questions{% endblock %}
+{% block content %}
+<div class="form-card">
+    <h2>📝 Add MCQ Questions</h2>
+    <p class="exam-info">Exam: <strong>{{ exam.title }}</strong> | Subject: {{ exam.subject }}</p>
+    
+    <form method="POST" id="question-form">
+        <div id="questions-container">
+            {% if questions %}
+                {% for q in questions %}
+                <div class="question-block">
+                    <h4>Question {{ loop.index }} {% if not loop.first %}<button type="button" class="btn-remove" onclick="removeQuestion(this)">✕</button>{% endif %}</h4>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea name="question[]" required rows="2" placeholder="Enter question here...">{{ q.question_text }}</textarea>
+                    </div>
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label>Option A</label>
+                            <input type="text" name="option_a[]" required value="{{ q.options.A }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Option B</label>
+                            <input type="text" name="option_b[]" required value="{{ q.options.B }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Option C</label>
+                            <input type="text" name="option_c[]" required value="{{ q.options.C }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Option D</label>
+                            <input type="text" name="option_d[]" required value="{{ q.options.D }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Correct Answer</label>
+                            <select name="correct[]" required>
+                                <option value="A" {% if q.correct_option == 'A' %}selected{% endif %}>A</option>
+                                <option value="B" {% if q.correct_option == 'B' %}selected{% endif %}>B</option>
+                                <option value="C" {% if q.correct_option == 'C' %}selected{% endif %}>C</option>
+                                <option value="D" {% if q.correct_option == 'D' %}selected{% endif %}>D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Marks</label>
+                            <input type="number" name="marks[]" required min="1" value="{{ q.marks }}">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="question-block">
+                    <h4>Question 1</h4>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea name="question[]" required rows="2" placeholder="Enter question here..."></textarea>
+                    </div>
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label>Option A</label>
+                            <input type="text" name="option_a[]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Option B</label>
+                            <input type="text" name="option_b[]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Option C</label>
+                            <input type="text" name="option_c[]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Option D</label>
+                            <input type="text" name="option_d[]" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Correct Answer</label>
+                            <select name="correct[]" required>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Marks</label>
+                            <input type="number" name="marks[]" required min="1" value="1">
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="addQuestion()">+ Add Another Question</button>
+            <button type="submit" class="btn btn-success">Save All Questions</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateQuestionNumbers() {
+    const blocks = document.querySelectorAll('.question-block');
+    blocks.forEach((block, index) => {
+        const title = block.querySelector('h4');
+        const qNum = index + 1;
+        if (index === 0) {
+            title.innerHTML = `Question ${qNum}`;
+        } else {
+            title.innerHTML = `Question ${qNum} <button type="button" class="btn-remove" onclick="removeQuestion(this)">✕</button>`;
+        }
+    });
+}
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const block = document.createElement('div');
+    block.className = 'question-block';
+    block.innerHTML = `
+        <h4>Question <button type="button" class="btn-remove" onclick="removeQuestion(this)">✕</button></h4>
+        <div class="form-group">
+            <label>Question Text</label>
+            <textarea name="question[]" required rows="2" placeholder="Enter question here..."></textarea>
+        </div>
+        <div class="options-grid">
+            <div class="form-group"><label>Option A</label><input type="text" name="option_a[]" required></div>
+            <div class="form-group"><label>Option B</label><input type="text" name="option_b[]" required></div>
+            <div class="form-group"><label>Option C</label><input type="text" name="option_c[]" required></div>
+            <div class="form-group"><label>Option D</label><input type="text" name="option_d[]" required></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Correct Answer</label>
+                <select name="correct[]" required>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Marks</label>
+                <input type="number" name="marks[]" required min="1" value="1">
+            </div>
+        </div>
+    `;
+    container.appendChild(block);
+    updateQuestionNumbers();
+}
+
+function removeQuestion(btn) {
+    btn.closest('.question-block').remove();
+    updateQuestionNumbers();
+}
+</script>
+{% endblock %}
