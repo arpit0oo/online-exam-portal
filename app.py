@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore, auth as admin_auth
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
 import json
+import os
 from functools import wraps
 from datetime import datetime
 import uuid
@@ -11,7 +12,19 @@ app = Flask(__name__)
 app.config.from_object('config.Config')
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate('firebase-adminsdk.json')
+if os.path.exists('firebase-adminsdk.json'):
+    cred = credentials.Certificate('firebase-adminsdk.json')
+else:
+    adminsdk_json = os.environ.get('FIREBASE_ADMINSDK_JSON')
+    if adminsdk_json:
+        try:
+            cred_dict = json.loads(adminsdk_json)
+            cred = credentials.Certificate(cred_dict)
+        except Exception as e:
+            raise ValueError(f"Failed to parse FIREBASE_ADMINSDK_JSON: {e}")
+    else:
+        raise ValueError("Firebase Admin credentials not found! Set FIREBASE_ADMINSDK_JSON or add firebase-adminsdk.json.")
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
