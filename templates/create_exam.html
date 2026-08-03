@@ -12,6 +12,18 @@
             <label>Subject</label>
             <input type="text" name="subject" required placeholder="e.g., Mathematics">
         </div>
+        <div class="form-group">
+            <label>Assign to Class</label>
+            <select name="class_id" required>
+                <option value="all">🌐 All Classes (No Restriction)</option>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}">🏫 {{ cls.name }}</option>
+                {% endfor %}
+            </select>
+            {% if not classes %}
+            <p class="form-hint">⚠️ You have no classes yet. <a href="{{ url_for('create_class') }}">Create a class first</a>, or select "All Classes".</p>
+            {% endif %}
+        </div>
         <div class="form-row">
             <div class="form-group">
                 <label>Duration (minutes)</label>
@@ -22,7 +34,18 @@
                 <input type="number" name="total_marks" required min="1" value="100">
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Create Exam & Add Questions</button>
+        <div class="form-row">
+            <div class="form-group">
+                <label>📅 Opens At <span class="form-hint-inline">(optional)</span></label>
+                <input type="datetime-local" name="opens_at">
+            </div>
+            <div class="form-group">
+                <label>📅 Closes At <span class="form-hint-inline">(optional)</span></label>
+                <input type="datetime-local" name="closes_at">
+            </div>
+        </div>
+        <p class="form-hint">Leave schedule blank to make the exam always available once published.</p>
+        <button type="submit" class="btn btn-primary">Create Exam &amp; Add Questions</button>
     </form>
 </div>
 {% endblock %}

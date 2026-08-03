@@ -3,31 +3,82 @@
 {% block content %}
 <div class="dashboard-header">
     <h2>👨‍🎓 Student Dashboard</h2>
+    <a href="{{ url_for('join_class') }}" class="btn btn-success">+ Join a Class</a>
 </div>
 
+{# ── My Classes ── #}
+<h3 class="section-title">🏫 My Classes ({{ my_classes|length }})</h3>
+{% if my_classes %}
+<div class="class-grid">
+    {% for cls in my_classes %}
+    <div class="class-card">
+        <div class="class-card-header">
+            <div class="class-icon">🎓</div>
+            <div class="class-info">
+                <h3>{{ cls.name }}</h3>
+                {% if cls.description %}<p class="class-desc">{{ cls.description }}</p>{% endif %}
+                <small style="color:var(--text-light);">By {{ cls.teacher_name }}</small>
+            </div>
+        </div>
+        <div class="exam-actions" style="margin-top:0.75rem;">
+            <a href="{{ url_for('leave_class', class_id=cls.id) }}"
+               class="btn btn-small btn-danger"
+               onclick="return confirm('Leave class \'{{ cls.name }}\'?')">Leave Class</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🏫</div>
+    <h3>No Classes Yet</h3>
+    <p>Ask your teacher for a Join Code and click <strong>+ Join a Class</strong>.</p>
+</div>
+{% endif %}
+
+{# ── Available Exams ── #}
 <h3 class="section-title">📋 Available Exams</h3>
 <div class="exam-grid">
     {% for exam in available_exams %}
     <div class="exam-card">
         <div class="exam-header">
             <h3>{{ exam.title }}</h3>
-            <span class="badge badge-published">AVAILABLE</span>
+            {% if exam.schedule_status == 'open' %}
+                <span class="badge badge-published">OPEN</span>
+            {% elif exam.schedule_status == 'upcoming' %}
+                <span class="badge badge-draft">UPCOMING</span>
+            {% else %}
+                <span class="badge badge-danger">CLOSED</span>
+            {% endif %}
         </div>
         <p class="exam-subject">📚 {{ exam.subject }}</p>
-        <p class="exam-teacher">By: {{ exam.teacher_name }}</p>
+        <p class="exam-teacher">By: {{ exam.teacher_name }} | 🎯 {{ exam.target_class_name or 'All' }}</p>
+        {% if exam.opens_at %}
+        <p class="exam-schedule">🕐 Opens: {{ exam.opens_at[:16].replace('T',' ') }}</p>
+        {% endif %}
+        {% if exam.closes_at %}
+        <p class="exam-schedule">🕕 Closes: {{ exam.closes_at[:16].replace('T',' ') }}</p>
+        {% endif %}
         <div class="exam-meta">
             <span>⏱️ {{ exam.duration_minutes }} min</span>
             <span>📝 {{ exam.total_marks }} marks</span>
         </div>
+        {% if exam.schedule_status == 'open' %}
         <a href="{{ url_for('take_exam', exam_id=exam.id) }}" class="btn btn-primary btn-block">Start Exam</a>
+        {% elif exam.schedule_status == 'upcoming' %}
+        <button class="btn btn-block" disabled style="opacity:.5;cursor:not-allowed;">Not Open Yet</button>
+        {% else %}
+        <button class="btn btn-block btn-danger" disabled style="opacity:.5;cursor:not-allowed;">Closed</button>
+        {% endif %}
     </div>
     {% else %}
     <div class="empty-state">
-        <p>No available exams right now. Check back later!</p>
+        <p>{% if class_ids %}No available exams right now. Check back later!{% else %}Join a class to see exams.{% endif %}</p>
     </div>
     {% endfor %}
 </div>
 
+{# ── Past Results ── #}
 <h3 class="section-title">📜 Past Results</h3>
 <div class="results-list">
     {% for result in past_results %}

@@ -13,29 +13,49 @@
                 <th>#</th>
                 <th>Student Name</th>
                 <th>Score</th>
-                <th>Total Marks</th>
                 <th>Percentage</th>
                 <th>Time Taken</th>
+                <th>🛡️ Violations</th>
+                <th>Tab Switches</th>
+                <th>FS Exits</th>
+                <th>Copy Attempts</th>
                 <th>Submitted At</th>
             </tr>
         </thead>
         <tbody>
             {% for result in results %}
+            {% set p = result.get('proctoring', {}) %}
+            {% set total_v = p.get('total_violations', 0) %}
             <tr>
                 <td>{{ loop.index }}</td>
                 <td>{{ result.student_name }}</td>
-                <td><strong>{{ result.score }}</strong></td>
-                <td>{{ result.total_marks }}</td>
+                <td><strong>{{ result.score }}/{{ result.total_marks }}</strong></td>
                 <td>{{ "%.1f"|format(result.score / result.total_marks * 100) }}%</td>
                 <td>{{ result.time_taken_seconds // 60 }}m {{ result.time_taken_seconds % 60 }}s</td>
+                <td>
+                    {% if total_v == 0 %}
+                        <span class="badge badge-published">✅ Clean</span>
+                    {% elif total_v <= 2 %}
+                        <span class="badge badge-draft">⚠️ {{ total_v }}</span>
+                    {% else %}
+                        <span class="badge badge-danger">🚨 {{ total_v }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.get('tab_switches', 0) }}</td>
+                <td>{{ p.get('fullscreen_exits', 0) }}</td>
+                <td>{{ p.get('copy_attempts', 0) }}</td>
                 <td>{{ result.submitted_at[:16] }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="text-center">No attempts yet.</td>
+                <td colspan="10" class="text-center">No attempts yet.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<p style="color:var(--text-light);font-size:0.82rem;margin-top:1rem;">
+  🛡️ <strong>Violations Legend:</strong> ✅ Clean = 0 violations &nbsp;|&nbsp; ⚠️ = 1–2 minor violations &nbsp;|&nbsp; 🚨 = 3+ suspicious activity
+</p>
 {% endblock %}

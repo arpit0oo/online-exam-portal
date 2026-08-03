@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ cls.name }} - Students{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h2>👥 {{ cls.name }} — Students</h2>
+        <p style="color:var(--text-light);margin-top:0.25rem;">Join Code: <strong class="join-code-inline">{{ cls.join_code }}</strong></p>
+    </div>
+    <a href="{{ url_for('teacher_classes') }}" class="btn btn-secondary">← Back to Classes</a>
+</div>
+
+{% if students %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Joined On</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>👨‍🎓 {{ student.name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.joined_at[:10] if student.joined_at else '—' }}</td>
+            <td>
+                <form method="POST"
+                      action="{{ url_for('remove_student', class_id=cls.id, student_id=student.id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Remove {{ student.name }} from this class?')">
+                    <button type="submit" class="btn btn-small btn-danger">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">👥</div>
+    <h3>No Students Yet</h3>
+    <p>Share the Join Code <strong>{{ cls.join_code }}</strong> with your students so they can enroll.</p>
+</div>
+{% endif %}
+{% endblock %}

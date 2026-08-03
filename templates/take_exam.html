@@ -1,6 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Take Exam - {{ exam.title }}{% endblock %}
 {% block content %}
+
+<!-- ── Proctoring Warning Overlay ── -->
+<div id="proctor-warning" style="display:none;
+    position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);
+    display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+  <div style="background:#fff;border-radius:16px;padding:2.5rem 3rem;text-align:center;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+    <div style="font-size:3rem;">⚠️</div>
+    <h2 style="color:#ef4444;margin:0.5rem 0 0.75rem;font-size:1.5rem;">Proctoring Alert</h2>
+    <p id="proctor-warning-text" style="color:#374151;margin-bottom:1.25rem;line-height:1.6;"></p>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.5rem;">
+      <p style="color:#92400e;font-size:0.85rem;margin:0;">⚡ Violations are recorded and visible to your teacher.</p>
+    </div>
+    <button id="proctor-dismiss" onclick="dismissWarning()"
+      style="background:#4f46e5;color:white;border:none;padding:0.75rem 2rem;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;">
+      Return to Exam
+    </button>
+  </div>
+</div>
+
+<!-- ── Fullscreen Prompt ── -->
+<div id="fullscreen-prompt" style="
+    position:fixed;inset:0;z-index:9998;background:#0f172a;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+  <div style="text-align:center;color:white;max-width:400px;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🔒</div>
+    <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:0.5rem;">Proctored Exam</h2>
+    <p style="color:#94a3b8;margin-bottom:2rem;line-height:1.6;">
+      This exam requires <strong style="color:white;">fullscreen mode</strong>.
+      Tab switching, copy-paste, and right-click are disabled and all violations are recorded.
+    </p>
+    <button onclick="enterFullscreen()"
+      style="background:#4f46e5;color:white;border:none;padding:1rem 2.5rem;border-radius:10px;font-size:1.1rem;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 20px rgba(79,70,229,0.4);">
+      🚀 Enter Fullscreen & Start Exam
+    </button>
+  </div>
+</div>
+
+<!-- ── Violation Counter Bar ── -->
+<div id="violation-bar" style="
+    background:#fef3c7;border-bottom:2px solid #fde68a;
+    padding:0.6rem 1.5rem;font-size:0.9rem;font-weight:600;color:#92400e;
+    display:flex;justify-content:space-between;align-items:center;
+    position:sticky;top:72px;z-index:89;display:none;">
+  <span>🛡️ Proctoring Active</span>
+  <span>⚠️ Violations: <span id="violation-count">0</span></span>
+</div>
+
+<!-- ── Exam Header ── -->
 <div class="exam-header-bar">
     <h2>{{ exam.title }}</h2>
     <div class="timer-box" id="timer">⏱️ {{ remaining_seconds // 60 }}:{{ "%02d"|format(remaining_seconds % 60) }}</div>
@@ -8,7 +56,10 @@
 
 <form method="POST" action="{{ url_for('submit_exam', exam_id=exam_id) }}" id="exam-form">
     <input type="hidden" name="start_time" value="{{ now }}">
-    
+    <input type="hidden" name="tab_switches" id="tab-switches-input" value="0">
+    <input type="hidden" name="fullscreen_exits" id="fullscreen-exits-input" value="0">
+    <input type="hidden" name="copy_attempts" id="copy-attempts-input" value="0">
+
     <div class="questions-list">
         {% for question in questions %}
         <div class="question-item">
@@ -24,14 +75,104 @@
         </div>
         {% endfor %}
     </div>
-    
+
     <div class="exam-actions-bar">
-        <button type="submit" class="btn btn-success btn-lg">Submit Exam</button>
+        <button type="submit" class="btn btn-success btn-lg"
+          onclick="return confirm('Are you sure you want to submit?')">Submit Exam</button>
     </div>
 </form>
 
 <script src="{{ url_for('static', filename='js/timer.js') }}"></script>
 <script>
-    startTimer({{ remaining_seconds }}, 'exam-form');
+  startTimer({{ remaining_seconds }}, 'exam-form');
+
+  // ── State ──
+  let tabSwitches    = 0;
+  let fullscreenExits = 0;
+  let copyAttempts   = 0;
+  let examStarted    = false;
+
+  // ── Fullscreen ──
+  function enterFullscreen() {
+    const el = document.documentElement;
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
+    document.getElementById('fullscreen-prompt').style.display = 'none';
+    document.getElementById('violation-bar').style.display = 'flex';
+    examStarted = true;
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && examStarted) {
+      fullscreenExits++;
+      updateCounts();
+      showWarning('You exited fullscreen mode. Please return to fullscreen immediately.');
+    }
+  });
+
+  // ── Tab / Window Blur ──
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && examStarted) {
+      tabSwitches++;
+      updateCounts();
+      showWarning(`Tab switch detected! You have switched tabs ${tabSwitches} time(s). This is recorded.`);
+    }
+  });
+
+  window.addEventListener('blur', () => {
+    if (examStarted) {
+      tabSwitches++;
+      updateCounts();
+    }
+  });
+
+  // ── Copy / Paste / Cut block ──
+  ['copy','cut','paste'].forEach(evt => {
+    document.addEventListener(evt, e => {
+      if (!examStarted) return;
+      e.preventDefault();
+      copyAttempts++;
+      updateCounts();
+      showWarning(`${evt.charAt(0).toUpperCase()+evt.slice(1)} is not allowed during an exam. Violation recorded.`);
+    });
+  });
+
+  // ── Right-click block ──
+  document.addEventListener('contextmenu', e => { if (examStarted) e.preventDefault(); });
+
+  // ── Keyboard shortcuts block (Ctrl+C, Ctrl+V, Ctrl+U, F12, etc.) ──
+  document.addEventListener('keydown', e => {
+    if (!examStarted) return;
+    const blocked = (e.ctrlKey && ['c','v','x','u','a','s','p'].includes(e.key.toLowerCase()))
+                    || e.key === 'F12' || e.key === 'PrintScreen';
+    if (blocked) {
+      e.preventDefault();
+      copyAttempts++;
+      updateCounts();
+      showWarning('Keyboard shortcut blocked. All shortcut usage is recorded.');
+    }
+  });
+
+  // ── Helpers ──
+  function updateCounts() {
+    document.getElementById('tab-switches-input').value   = tabSwitches;
+    document.getElementById('fullscreen-exits-input').value = fullscreenExits;
+    document.getElementById('copy-attempts-input').value  = copyAttempts;
+    document.getElementById('violation-count').textContent =
+      tabSwitches + fullscreenExits + copyAttempts;
+  }
+
+  function showWarning(msg) {
+    const overlay = document.getElementById('proctor-warning');
+    document.getElementById('proctor-warning-text').textContent = msg;
+    overlay.style.display = 'flex';
+  }
+
+  function dismissWarning() {
+    document.getElementById('proctor-warning').style.display = 'none';
+    // Re-enter fullscreen if exited
+    if (!document.fullscreenElement && examStarted) {
+      enterFullscreen();
+    }
+  }
 </script>
 {% endblock %}

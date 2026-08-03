@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Join a Class{% endblock %}
+{% block content %}
+<div class="auth-card" style="max-width:480px;">
+    <h2>🔑 Join a Class</h2>
+    <p style="color:var(--text-light);margin-bottom:1.5rem;">Ask your teacher for the <strong>Class Join Code</strong> and enter it below to enroll.</p>
+    <form method="POST">
+        <div class="form-group">
+            <label>Class Join Code</label>
+            <input type="text"
+                   name="join_code"
+                   required
+                   placeholder="e.g., XK7-P2Q"
+                   style="text-transform:uppercase;letter-spacing:0.15em;font-size:1.2rem;font-weight:700;text-align:center;"
+                   autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Join Class</button>
+    </form>
+    <p class="auth-link" style="margin-top:1.5rem;">
+        <a href="{{ url_for('student_dashboard') }}">← Back to Dashboard</a>
+    </p>
+</div>
+{% endblock %}

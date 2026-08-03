@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}My Classes - Teacher{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <h2>🏫 My Classes</h2>
+    <a href="{{ url_for('create_class') }}" class="btn btn-success">+ Create New Class</a>
+</div>
+
+{% if classes %}
+<div class="class-grid">
+    {% for cls in classes %}
+    <div class="class-card">
+        <div class="class-card-header">
+            <div class="class-icon">🎓</div>
+            <div class="class-info">
+                <h3>{{ cls.name }}</h3>
+                {% if cls.description %}
+                <p class="class-desc">{{ cls.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="join-code-box">
+            <span class="join-code-label">Join Code</span>
+            <span class="join-code-value" id="code-{{ cls.id }}">{{ cls.join_code }}</span>
+            <button class="btn-copy" onclick="copyCode('{{ cls.join_code }}', this)" title="Copy Code">📋</button>
+        </div>
+        <div class="class-stats">
+            <span>👥 {{ cls.student_count }} student{{ 's' if cls.student_count != 1 else '' }}</span>
+            <span>📅 {{ cls.created_at[:10] }}</span>
+        </div>
+        <div class="exam-actions">
+            <a href="{{ url_for('class_students', class_id=cls.id) }}" class="btn btn-small btn-info">View Students</a>
+            <a href="{{ url_for('delete_class', class_id=cls.id) }}"
+               class="btn btn-small btn-danger"
+               onclick="return confirm('Delete class \'{{ cls.name }}\'? All enrolled students will be unenrolled.')">
+               Delete
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🏫</div>
+    <h3>No Classes Yet</h3>
+    <p>Create your first class and share the Join Code with your students.</p>
+    <a href="{{ url_for('create_class') }}" class="btn btn-primary" style="margin-top:1rem;">Create Class</a>
+</div>
+{% endif %}
+
+<script>
+function copyCode(code, btn) {
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = '✅';
+        setTimeout(() => btn.textContent = '📋', 2000);
+    });
+}
+</script>
+{% endblock %}
